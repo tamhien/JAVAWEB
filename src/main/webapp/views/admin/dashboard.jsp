@@ -67,7 +67,7 @@
                     <span>☰ Menu</span>
                 </button>
                 <div class="ml-auto">
-                    <span class="mr-3">Chào, <strong>Admin</strong></span>
+                    <span class="mr-3">Chào, <strong>${sessionScope.user.fullName}</strong></span>
                     <a href="${pageContext.request.contextPath}/logout" class="btn btn-outline-danger btn-sm">Thoát</a>
                 </div>
             </div>
