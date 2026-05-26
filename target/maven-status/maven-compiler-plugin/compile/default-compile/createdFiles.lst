@@ -1,0 +1,11 @@
+controller\AdminController.class
+dao\OrderDAO.class
+model\Category.class
+model\Perfume.class
+dao\UserDAO.class
+service\ProductService.class
+utils\DBConnection.class
+model\Brand.class
+dao\ProductDAO.class
+model\Order.class
+model\User.class
