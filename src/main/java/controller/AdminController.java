@@ -8,9 +8,13 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import model.Order;
 import service.ProductService;
 
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 
 @WebServlet("/admin/*")
 @MultipartConfig(
@@ -31,9 +35,33 @@ public class AdminController extends HttpServlet {
         String path = request.getPathInfo() != null ? request.getPathInfo() : "/dashboard";
 
         if (path.equals("/") || path.equals("/dashboard")) {
-            request.setAttribute("totalRevenue", orderDAO.getTotalRevenue());
-            request.setAttribute("orderCount", orderDAO.getAllOrders().size());
+            int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+            String monthParam = request.getParameter("month");
+            
+            if (monthParam != null && !monthParam.isEmpty()) {
+                // Monthly view
+                int selectedMonth = Integer.parseInt(monthParam);
+                List<Order> monthOrders = orderDAO.getOrdersByMonth(selectedMonth, currentYear);
+                double monthRevenue = 0;
+                for (Order o : monthOrders) {
+                    if ("COMPLETED".equals(o.getOrderStatus())) {
+                        monthRevenue += o.getTotalPrice().doubleValue();
+                    }
+                }
+                request.setAttribute("selectedMonth", selectedMonth);
+                request.setAttribute("orders", monthOrders);
+                request.setAttribute("totalRevenue", monthRevenue);
+                request.setAttribute("orderCount", monthOrders.size());
+            } else {
+                // Yearly overview
+                request.setAttribute("totalRevenue", orderDAO.getTotalRevenueByYear(currentYear));
+                request.setAttribute("orderCount", orderDAO.getOrderCountByYear(currentYear));
+                Map<Integer, Double> monthlyRevenue = orderDAO.getMonthlyRevenue(currentYear);
+                request.setAttribute("monthlyRevenue", monthlyRevenue);
+            }
+            
             request.setAttribute("productCount", productService.getAllProducts().size());
+            request.setAttribute("currentYear", currentYear);
             request.setAttribute("contentPage", "dashboard");
 
         } else if (path.equals("/products")) {
