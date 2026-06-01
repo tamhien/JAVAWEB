@@ -12,7 +12,7 @@ import utils.BCryptUtil;
 
 import java.io.IOException;
 
-@WebServlet(urlPatterns = {"/login", "/register", "/logout"})
+@WebServlet(urlPatterns = {"/login", "/register", "/logout", "/forgot-password"})
 public class AuthController extends HttpServlet {
     private final UserDAO userDAO = new UserDAO();
 
@@ -24,9 +24,11 @@ public class AuthController extends HttpServlet {
             request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
         } else if (path.equals("/register")) {
             request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
+        } else if (path.equals("/forgot-password")) {
+            request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
         } else if (path.equals("/logout")) {
             request.getSession().invalidate();
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/products");
         }
     }
 
@@ -38,6 +40,25 @@ public class AuthController extends HttpServlet {
             handleLogin(request, response);
         } else if (path.equals("/register")) {
             handleRegister(request, response);
+        } else if (path.equals("/forgot-password")) {
+            handleForgotPassword(request, response);
+        }
+    }
+
+    private void handleForgotPassword(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        String email = request.getParameter("email");
+        User user = userDAO.getUserByEmail(email);
+
+        if (user != null) {
+            // Trong thực tế sẽ gửi email chứa token. 
+            // Ở đây ta giả lập bằng cách reset pass về "123456"
+            String tempPass = "123456";
+            userDAO.updatePassword(user.getId(), BCryptUtil.hashPassword(tempPass));
+            response.sendRedirect(request.getContextPath() + "/forgot-password?success=true");
+        } else {
+            request.setAttribute("error", "Email không tồn tại trong hệ thống!");
+            request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
         }
     }
 
@@ -60,7 +81,7 @@ public class AuthController extends HttpServlet {
             if ("ADMIN".equals(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/admin/dashboard");
             } else {
-                response.sendRedirect(request.getContextPath() + "/index.jsp");
+                response.sendRedirect(request.getContextPath() + "/products");
             }
         } else {
             request.setAttribute("error", "Email hoặc mật khẩu không chính xác!");

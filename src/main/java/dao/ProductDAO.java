@@ -10,17 +10,57 @@ import java.util.List;
 public class ProductDAO {
 
     public List<Perfume> getAllProducts() {
-        List<Perfume> list = new ArrayList<>();
-        String sql = "SELECT p.*, b.name as brand_name, c.name as category_name " +
-                     "FROM perfumes p " +
+        // Sửa: Không truyền null vào đây
+        return getProductsByQuery("SELECT p.*, b.name as brand_name, c.name as category_name FROM perfumes p LEFT JOIN brands b ON p.brand_id = b.id LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'ACTIVE' ORDER BY p.id DESC");
+    }
+
+    public List<Perfume> searchProducts(String keyword) {
+        String sql = "SELECT p.*, b.name as brand_name, c.name as category_name FROM perfumes p " +
                      "LEFT JOIN brands b ON p.brand_id = b.id " +
                      "LEFT JOIN categories c ON p.category_id = c.id " +
+                     "WHERE p.status = 'ACTIVE' AND (p.name LIKE ? OR b.name LIKE ?) " +
                      "ORDER BY p.id DESC";
+        return getProductsByQuery(sql, "%" + keyword + "%", "%" + keyword + "%");
+    }
+
+    public List<Perfume> getProductsByCategory(int categoryId) {
+        String sql = "SELECT p.*, b.name as brand_name, c.name as category_name FROM perfumes p " +
+                     "LEFT JOIN brands b ON p.brand_id = b.id " +
+                     "LEFT JOIN categories c ON p.category_id = c.id " +
+                     "WHERE p.status = 'ACTIVE' AND p.category_id = ? ORDER BY p.id DESC";
+        return getProductsByQuery(sql, categoryId);
+    }
+
+    public List<Perfume> getProductsByBrand(int brandId) {
+        String sql = "SELECT p.*, b.name as brand_name, c.name as category_name FROM perfumes p " +
+                     "LEFT JOIN brands b ON p.brand_id = b.id " +
+                     "LEFT JOIN categories c ON p.category_id = c.id " +
+                     "WHERE p.status = 'ACTIVE' AND p.brand_id = ? ORDER BY p.id DESC";
+        return getProductsByQuery(sql, brandId);
+    }
+
+    public List<Perfume> getProductsByGender(String gender) {
+        String sql = "SELECT p.*, b.name as brand_name, c.name as category_name FROM perfumes p " +
+                     "LEFT JOIN brands b ON p.brand_id = b.id " +
+                     "LEFT JOIN categories c ON p.category_id = c.id " +
+                     "WHERE p.status = 'ACTIVE' AND p.gender = ? ORDER BY p.id DESC";
+        return getProductsByQuery(sql, gender);
+    }
+
+    private List<Perfume> getProductsByQuery(String sql, Object... params) {
+        List<Perfume> list = new ArrayList<>();
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapResultSetToPerfume(rs));
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            // Thêm kiểm tra null cho params để tránh lỗi NullPointerException
+            if (params != null) {
+                for (int i = 0; i < params.length; i++) {
+                    ps.setObject(i + 1, params[i]);
+                }
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToPerfume(rs));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();

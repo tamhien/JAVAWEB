@@ -25,6 +25,52 @@ public class OrderDAO {
         return list;
     }
 
+    public List<Order> getOrdersByUserId(int userId) {
+        List<Order> list = new ArrayList<>();
+        String sql = "SELECT o.*, u.full_name as user_name FROM orders o " +
+                     "JOIN users u ON o.user_id = u.id " +
+                     "WHERE o.user_id = ? ORDER BY o.created_at DESC";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapResultSetToOrder(rs));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int insertOrder(Order order) {
+        String sql = "INSERT INTO orders (user_id, total_price, shipping_address, phone_number, payment_method, payment_status, order_status) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, order.getUserId());
+            ps.setBigDecimal(2, order.getTotalPrice());
+            ps.setString(3, order.getShippingAddress());
+            ps.setString(4, order.getPhoneNumber());
+            ps.setString(5, order.getPaymentMethod());
+            ps.setString(6, order.getPaymentStatus());
+            ps.setString(7, order.getOrderStatus());
+            
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
     public List<Order> getOrdersByMonth(int month, int year) {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT o.*, u.full_name as user_name FROM orders o " +
@@ -102,7 +148,6 @@ public class OrderDAO {
                     int m = rs.getInt("month");
                     double rev = rs.getDouble("revenue");
                     monthlyData.put(m, rev);
-                    System.out.println("Tháng " + m + " có doanh thu: " + rev); // Debug log
                 }
             }
         } catch (SQLException e) {

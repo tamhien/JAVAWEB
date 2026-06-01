@@ -17,6 +17,22 @@ public class ProductService {
         return productDAO.getAllProducts();
     }
 
+    public List<Perfume> searchProducts(String keyword) {
+        return productDAO.searchProducts(keyword);
+    }
+
+    public List<Perfume> getProductsByCategory(int categoryId) {
+        return productDAO.getProductsByCategory(categoryId);
+    }
+
+    public List<Perfume> getProductsByBrand(int brandId) {
+        return productDAO.getProductsByBrand(brandId);
+    }
+
+    public List<Perfume> getProductsByGender(String gender) {
+        return productDAO.getProductsByGender(gender);
+    }
+
     public List<model.Brand> getAllBrands() {
         return productDAO.getAllBrands();
     }
@@ -88,16 +104,13 @@ public class ProductService {
         if (filePart != null && filePart.getSize() > 0) {
             String fileName = UUID.randomUUID().toString() + "_" + getFileName(filePart);
             
-            // 1. Save to Real Path (Tomcat's temporary deployment folder - for immediate display)
             String appPath = request.getServletContext().getRealPath("");
             String deployPath = appPath + File.separator + "assets" + File.separator + "images";
             File deployDir = new File(deployPath);
             if (!deployDir.exists()) deployDir.mkdirs();
             filePart.write(deployPath + File.separator + fileName);
             
-            // 2. Save to Source Path (Your actual project folder - for permanent storage)
-            // This assumes your project is at D:\Downloads\shopnuochoa
-            String sourcePath = "D:\\Downloads\\shopnuochoa\\src\\main\\webapp\\assets\\images";
+            String sourcePath = "D:\\JAVAWEB\\src\\main\\webapp\\assets\\images";
             File sourceDir = new File(sourcePath);
             if (sourceDir.exists()) {
                 filePart.write(sourcePath + File.separator + fileName);
